@@ -1,0 +1,137 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <script src="js/jquery-3.1.1.min.js"></script>
+        <script src="js/popper.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/d3.js"></script>
+        <script src="js/math.min.js"></script>
+        <script src="js/plotly.min.js"></script>
+    </head>
+    <script>
+        var psv = d3.dsvFormat(",");
+        var filesDirectory = 'file/';
+        var kNumber = 4;
+        var labels;
+
+        // ambil daftar file 
+        $.ajax({url: filesDirectory}).then(function(html) {
+            // create temporary DOM element
+            var document = $(html);
+
+            // find all links ending with .pdf 
+            document.find('a[href$=".txt"]').each(function() {
+                var fileName = $(this).text();
+                var fileUrl = $(this).attr('href');
+
+                // do what you want here
+                $(".dropdown-menu").append("<a href='#' class='dropdown-item' onclick='clusterize(\"" + fileName + "\")'>" + fileName + "</a>");
+            })
+        });
+        // inisialisasi proses clustering
+        function clusterize(fileName) {
+            d3variable = d3.request(filesDirectory + fileName)
+            .mimeType("text/plain")
+            .response(function(xhr) { return psv.parse(xhr.responseText) });
+            d3result = d3variable.get(function(data) {
+                table = {}; population = []; ansPop = [];
+                labels = Object.keys(data[0]);
+                answer = labels.pop();
+                Object.keys(data[0]).forEach(label => {
+                    table[label] = [];
+                });
+                data.forEach(row => {
+                    let insidePop = {}, ansVal; //insidePop = variabel object yang ada di dalam variabel population; ansval = self-explanatory
+                    Object.keys(row).forEach(label => {
+                        table[label].push(Number(row[label]));
+                        if (label != answer) {
+                            insidePop[label] = Number(row[label]);
+                        }else{
+                            ansVal = row[label];
+                        }
+                    });
+                    ansPop.push(ansVal);
+                    population.push(insidePop);
+                });
+                // initializeDisplay();
+                initializeDistance();
+            });
+        }
+        //distance initialization (N*N)
+        function initializeDistance() {
+            distance = [];
+            population.forEach(rowParent => {
+                let insideDistance = [];
+                population.forEach(rowChild => {
+                    let distVal, totalDistance = 0;
+                    labels.forEach(label => {
+                        totalDistance += Math.pow((rowParent[label] - rowChild[label]), 2);
+                    });
+                    distVal = Math.sqrt(totalDistance);
+                    insideDistance.push(distVal);
+                });
+                distance.push(insideDistance);
+            });
+        }
+
+    </script>
+    <body onload="clusterize('iris.txt')"></body>
+        <!-- <div class="container">
+            <div class="jumbotron">
+                <h1 class="display-3">Metode K - Means</h1>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pilih File</button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton"></div>
+            </div><br>
+            <div class="card">
+                <div class="card-body text-capitalize">
+                    <div id="init"></div>
+                    <br>
+                    <div class="form-inline">
+                        <label for="input" style="margin-right: 15px">K-Number: </label>
+                        <input class="form-control" type="number" id="input" min="1" value="4" style="margin-right: 15px">
+                        <input class="btn btn-secondary" type="button" value="Proses" id="submit" onclick="process()">
+                    </div><br>
+                    <div id="result"></div>
+                    <button type="button" id="analysis" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="clusterVariance()" hidden>Cluster Analysis</button>
+                </div>
+            </div>
+            <!-- Modal
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Cluster Analysis</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                            <ul class="list-group">
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body> -->
+    <script>
+        $("#input").on("keyup","span",function(event){
+            if(event.keyCode == 13){
+                getNeighbour();
+            }
+        });
+        // $("#input").keydown(function (e) {
+        //     e.preventDefault();
+        // })
+        // $("#input").change(function (params) {
+        //     kNumber = Number($("#input").val());
+        // })
+        
+    </script>
+</html>
