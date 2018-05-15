@@ -17,6 +17,7 @@
 
         // ambil daftar file 
         $.ajax({url: filesDirectory}).then(function(html) {
+
             // create temporary DOM element
             var document = $(html);
 
@@ -149,6 +150,106 @@
                 }
             });
             cluster[Number(iter) + 1].push(cluster[iter][result[0]].concat(cluster[iter][result[1]]));
+        }
+
+        function errorRatioCalculation()
+        {
+            let finalCluster = cluster[cluster.length - 1];
+            let firstCondition = [ "Iris-setosa", "Iris-versicolor", "Iris-virginica"];
+            let secondCondition = [ "Iris-versicolor", "Iris-setosa", "Iris-virginica"];
+            let thirdCondition = [ "Iris-versicolor", "Iris-virginica", "Iris-setosa"];
+            let fourthCondition = [ "Iris-virginica", "Iris-setosa", "Iris-versicolor"];
+            let fifthCondition = [ "Iris-setosa", "Iris-virginica","Iris-versicolor"];
+            let sixthCondition = [ "Iris-virginica", "Iris-versicolor", "Iris-setosa"];
+
+            let firstConditionFail = 0;
+            let secondConditionFail = 0;
+            let thirdConditionFail = 0;
+            let fourthConditionFail = 0;
+            let fifthConditionFail = 0;
+            let sixthConditionFail = 0;
+
+            finalCluster.forEach((row, key) => {
+                finalCluster[key].forEach((i, j) => {
+                    /*console.log('---------------------');
+                    console.log(i);
+                    console.log(ansPop[i]);
+                    console.log(firstCondition[key]);
+                    console.log("---------------------");*/
+                    if(ansPop[i] != firstCondition[key]){
+                        firstConditionFail++;
+                    }
+
+                    if(ansPop[i] != secondCondition[key]){
+                        secondConditionFail++;
+                    }
+
+                    if(ansPop[i] != thirdCondition[key]){
+                        thirdConditionFail++;
+                    }
+
+                    if(ansPop[i] != fourthCondition[key]){
+                        fourthConditionFail++;
+                    }
+
+                    if(ansPop[i] != fifthCondition[key]){
+                        fifthConditionFail++;
+                    }
+
+                    if(ansPop[i] != sixthCondition[key]){
+                        sixthConditionFail++;
+                    }
+
+                });
+            });
+            
+            let minimumFail = 1000;
+
+            let firstConditionValue = ((firstConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 1 : "+firstConditionFail+" kesalahan dari "+population.length+" data, nilai "+ firstConditionValue+" %");
+
+            if(firstConditionFail < minimumFail){
+                minimumFail = firstConditionFail;
+            }
+
+            let secondConditionValue = ((secondConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 2 : "+secondConditionFail+" kesalahan dari "+population.length+" data, nilai "+ secondConditionValue+" %");
+            
+            if(secondConditionFail < minimumFail){
+                minimumFail = secondConditionFail;
+            }
+
+            let thirdConditionValue = ((thirdConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 3 : "+thirdConditionFail+" kesalahan dari "+population.length+" data, nilai "+ thirdConditionValue+" %");
+            
+            if(thirdConditionFail < minimumFail){
+                minimumFail = thirdConditionFail;
+            }
+
+            let fourthConditionValue = ((fourthConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 4 : "+fourthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ fourthConditionValue+" %");
+            
+            if(fourthConditionFail < minimumFail){
+                minimumFail = fourthConditionFail;
+            }
+
+            let fifthConditionValue = ((fifthConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 5 : "+fifthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ fifthConditionValue+" %");
+            
+            if(fifthConditionFail < minimumFail){
+                minimumFail = fifthConditionFail;
+            }
+
+            let sixthConditionValue = ((sixthConditionFail/population.length) * 100).toFixed(2);
+            console.log("Kombinasi 6 : "+sixthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ sixthConditionValue+" %");
+
+            if(sixthConditionFail < minimumFail){
+                minimumFail = sixthConditionFail;
+            }
+
+            console.log("========================================================================");
+            console.log("Error ratio dari clustering ini sebesar : "+ ((minimumFail/population.length)*100).toFixed(2) +" %");
+
         }
 
     </script>
