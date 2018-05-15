@@ -12,7 +12,7 @@
     <script>
         var psv = d3.dsvFormat(",");
         var filesDirectory = 'file/';
-        var kNumber = 4;
+        var kNumber = 3;
         var labels;
 
         // ambil daftar file 
@@ -89,8 +89,12 @@
             population.forEach((row, key) => {
                 cluster[0].push([key]);
             });
-
-            console.log(findNearest(0));
+            let iter = 0;
+            while (cluster[iter].length > kNumber) {
+                let hasil = findNearest(iter);
+                mergeCluster(iter, hasil.result);
+                console.log(++iter);
+            }
         }
 
         function findNearest(iter) {
@@ -100,7 +104,7 @@
             cluster[iter].forEach((rowParent, keyParent) => {
                 let centroParent = getCentroid(rowParent);
                 cluster[iter].forEach((rowChild, keyChild) => {
-                    if (keyParent != keyChild) { //complete linkage
+                    if (keyParent != keyChild) { //centroid linkage
                         let centroChild = getCentroid(rowChild);
                         tempDistance = getDistance(centroParent, centroChild);
                         if (tempDistance < nearest.val) {
@@ -121,9 +125,9 @@
                 clustArray.forEach(data =>{
                     labels.forEach(label =>{
                         if (!(label in average)) {
-                            average[label] = [population[data]];
+                            average[label] = [population[data][label]];
                         } else {
-                            average[label].push(population[data]);
+                            average[label].push(population[data][label]);
                         }
                     });
                 });
@@ -136,6 +140,15 @@
             }  
         }
         
+        function mergeCluster(iter, result) {
+            cluster[iter + 1] = [];
+            cluster[iter].forEach((row, key) => {
+                if (result.indexOf(key) == -1) {
+                    cluster[Number(iter) + 1].push(row);
+                }
+            });
+            cluster[Number(iter) + 1].push(cluster[iter][result[0]].concat(cluster[iter][result[1]]));
+        }
 
     </script>
     <body onload="clusterize('iris.txt')"></body>
