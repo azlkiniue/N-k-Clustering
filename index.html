@@ -12,7 +12,7 @@
     <script>
         var psv = d3.dsvFormat(",");
         var filesDirectory = 'file/';
-        var kNumber = 4;
+        var kNumber = 3;
         var labels;
 
         // ambil daftar file 
@@ -62,18 +62,93 @@
         //distance initialization (N*N)
         function initializeDistance() {
             distance = [];
-            population.forEach(rowParent => {
+            population.forEach((rowParent, key) => {
                 let insideDistance = [];
                 population.forEach(rowChild => {
-                    let distVal, totalDistance = 0;
-                    labels.forEach(label => {
-                        totalDistance += Math.pow((rowParent[label] - rowChild[label]), 2);
-                    });
-                    distVal = Math.sqrt(totalDistance);
+                    let distVal = getDistance(rowParent, rowChild);
                     insideDistance.push(distVal);
                 });
+                insideDistance[key] = null;
                 distance.push(insideDistance);
             });
+        }
+
+        function getDistance(a, b) {
+            let distVal, totalDistance = 0;
+            labels.forEach(label => {
+                totalDistance += Math.pow((a[label] - b[label]), 2);
+            });
+            distVal = Math.sqrt(totalDistance);
+            return distVal;
+        }
+
+        function process() {
+            //initializeDistance();
+            
+            //initialize cluster
+            cluster = [[]];
+            population.forEach((row, key) => {
+                cluster[0].push([key]);
+            });
+            let iter = 0;
+            while (cluster[iter].length > kNumber) {
+                let hasil = findNearest(iter);
+                mergeCluster(iter, hasil.result);
+                console.log(++iter);
+            }
+        }
+
+        function findNearest(iter) {
+            let nearest = {}; //nearest punya properti: value, key (index array yang memuat)
+            nearest.val = Number.MAX_SAFE_INTEGER; //inisialisasi min value
+            let tempDistance;
+            cluster[iter].forEach((rowParent, keyParent) => {
+                let centroParent = getCentroid(rowParent);
+                cluster[iter].forEach((rowChild, keyChild) => {
+                    if (keyParent != keyChild) { //centroid linkage
+                        let centroChild = getCentroid(rowChild);
+                        tempDistance = getDistance(centroParent, centroChild);
+                        if (tempDistance < nearest.val) {
+                            nearest.val = tempDistance;
+                            nearest.result = [keyParent, keyChild];
+                        }
+                    }
+                });
+            });
+
+            return nearest;
+
+            function getCentroid(clustArray) {
+                let average = {}; //variabel centroid yang akan di-return
+                if (clustArray.length == 1) { //skip jika cluster cuma isi 1
+                    return population[clustArray[0]];
+                }
+                clustArray.forEach(data =>{
+                    labels.forEach(label =>{
+                        if (!(label in average)) {
+                            average[label] = [population[data][label]];
+                        } else {
+                            average[label].push(population[data][label]);
+                        }
+                    });
+                });
+
+                labels.forEach(label => {
+                    average[label] = math.mean(average[label]);
+                });
+                
+                return average;
+            }  
+        }
+        
+        function mergeCluster(iter, result) {
+            cluster[iter + 1] = [];
+            cluster[iter].forEach((row, key) => {
+                if (result.indexOf(key) == -1) {
+                    cluster[Number(iter) + 1].push(row);
+                }
+            });
+            cluster[Number(iter) + 1].push(cluster[iter][result[0]].concat(cluster[iter][result[1]]));
         }
 
     </script>
