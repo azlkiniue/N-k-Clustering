@@ -7,7 +7,6 @@
         <script src="js/bootstrap.min.js"></script>
         <script src="js/d3.js"></script>
         <script src="js/math.min.js"></script>
-        <script src="js/plotly.min.js"></script>
     </head>
     <script>
         var psv = d3.dsvFormat(",");
@@ -55,11 +54,48 @@
                     ansPop.push(ansVal);
                     population.push(insidePop);
                 });
-                // initializeDisplay();
-                initializeDistance();
+                initializeDisplay();
+                // initializeDistance();
             });
         }
         
+        function initializeDisplay() {
+            labels.forEach(label => {
+                $("#init .head-row").append('<th>'+ label +'</th>');
+            }); $("#init .head-row").append('<th>'+ answer +'</th>');
+            
+            population.forEach((row, key) => {
+                $("#init tbody").append('<tr class="body-row'+ key +'"</td>');
+                $("#init .body-row"+key).append('<td>'+ (key+1) +'</td>');
+                labels.forEach(label => {
+                    $("#init .body-row"+key).append('<td>'+ row[label] +'</td>');
+                }); $("#init .body-row"+key).append('<td>'+ ansPop[key] +'</td>');
+            });
+        }
+
+        function display() {
+            //$("#result table").html("");
+            $("#result .head-row").append('<th>'+ answer +'</th>');
+            $("#result .head-row").append('<th>Cluster Result</th>');
+
+            tempClusterResult = [];
+            cluster[cluster.length-1].forEach((c, key) => {
+                c.forEach(element => {
+                    tempClusterResult[element] = key + 1;
+                });
+            });
+            
+            population.forEach((row, key) => {
+                $("#result tbody").append('<tr class="body-row'+ key +'"</td>');
+                $("#result .body-row"+key).append('<td>'+ (key+1) +'</td>');
+                $("#result .body-row"+key).append('<td>'+ ansPop[key] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ tempClusterResult[key] +'</td>');
+            });
+
+            $("#result").removeAttr('hidden');
+            $("#analysis").removeAttr('hidden');
+        }
+
         //distance initialization (N*N)
         function initializeDistance() {
             distance = [];
@@ -85,7 +121,7 @@
 
         function process() {
             //initializeDistance();
-            
+            kNumber = $("#input").val();
             //initialize cluster
             cluster = [[]];
             population.forEach((row, key) => {
@@ -96,7 +132,9 @@
                 let hasil = findNearest(iter);
                 mergeCluster(iter, hasil.result);
                 console.log(++iter);
+                console.log("Jumlah cluster: " + cluster[iter].length);
             }
+            display();
         }
 
         function findNearest(iter) {
@@ -154,13 +192,45 @@
 
         function errorRatioCalculation()
         {
+            $(".list-group").html("");
             let finalCluster = cluster[cluster.length - 1];
-            let firstCondition = [ "Iris-setosa", "Iris-versicolor", "Iris-virginica"];
-            let secondCondition = [ "Iris-versicolor", "Iris-setosa", "Iris-virginica"];
-            let thirdCondition = [ "Iris-versicolor", "Iris-virginica", "Iris-setosa"];
-            let fourthCondition = [ "Iris-virginica", "Iris-setosa", "Iris-versicolor"];
-            let fifthCondition = [ "Iris-setosa", "Iris-virginica","Iris-versicolor"];
-            let sixthCondition = [ "Iris-virginica", "Iris-versicolor", "Iris-setosa"];
+
+            // var swap = function (array, pos1, pos2) {
+            //     var temp = array[pos1];
+            //     array[pos1] = array[pos2];
+            //     array[pos2] = temp;
+            // };
+
+            // var heapsPermute = function (array, output, n) {
+            // n = n || array.length; // set n default to array.length
+            //     if (n === 1) {
+            //         output(array);
+            //     } else {
+            //         for (var i = 1; i <= n; i += 1) {
+            //             heapsPermute(array, output, n - 1);
+            //             if (n % 2) {
+            //                 var j = 1;
+            //             } else {
+            //                 var j = i;
+            //             }
+            //             swap(array, j - 1, n - 1); // -1 to account for javascript zero-indexing
+            //         }
+            //     }
+            // };
+
+            // // For testing:
+            // var print = function(input){
+            // console.log(input);
+            // }
+
+            // heapsPermute(['a', 'b', 'c', 'd'], print);
+
+            firstCondition = [ "Iris-setosa", "Iris-versicolor", "Iris-virginica"];
+            secondCondition = [ "Iris-versicolor", "Iris-setosa", "Iris-virginica"];
+            thirdCondition = [ "Iris-versicolor", "Iris-virginica", "Iris-setosa"];
+            fourthCondition = [ "Iris-virginica", "Iris-setosa", "Iris-versicolor"];
+            fifthCondition = [ "Iris-setosa", "Iris-virginica","Iris-versicolor"];
+            sixthCondition = [ "Iris-virginica", "Iris-versicolor", "Iris-setosa"];
 
             let firstConditionFail = 0;
             let secondConditionFail = 0;
@@ -171,11 +241,6 @@
 
             finalCluster.forEach((row, key) => {
                 finalCluster[key].forEach((i, j) => {
-                    /*console.log('---------------------');
-                    console.log(i);
-                    console.log(ansPop[i]);
-                    console.log(firstCondition[key]);
-                    console.log("---------------------");*/
                     if(ansPop[i] != firstCondition[key]){
                         firstConditionFail++;
                     }
@@ -203,79 +268,129 @@
                 });
             });
             
-            let minimumFail = 1000;
+            let minimumFail = population.length;
 
             let firstConditionValue = ((firstConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 1 : "+firstConditionFail+" kesalahan dari "+population.length+" data, nilai "+ firstConditionValue+" %");
+            console.log('Kombinasi 1 : '+firstConditionFail+' kesalahan dari '+population.length+' data, nilai '+ firstConditionValue+' %');
 
             if(firstConditionFail < minimumFail){
                 minimumFail = firstConditionFail;
             }
 
             let secondConditionValue = ((secondConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 2 : "+secondConditionFail+" kesalahan dari "+population.length+" data, nilai "+ secondConditionValue+" %");
+            console.log('Kombinasi 2 : '+secondConditionFail+' kesalahan dari '+population.length+' data, nilai '+ secondConditionValue+' %');
             
             if(secondConditionFail < minimumFail){
                 minimumFail = secondConditionFail;
             }
 
             let thirdConditionValue = ((thirdConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 3 : "+thirdConditionFail+" kesalahan dari "+population.length+" data, nilai "+ thirdConditionValue+" %");
+            console.log('Kombinasi 3 : '+thirdConditionFail+' kesalahan dari '+population.length+' data, nilai '+ thirdConditionValue+' %');
             
             if(thirdConditionFail < minimumFail){
                 minimumFail = thirdConditionFail;
             }
 
             let fourthConditionValue = ((fourthConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 4 : "+fourthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ fourthConditionValue+" %");
+            console.log('Kombinasi 4 : '+fourthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ fourthConditionValue+' %');
             
             if(fourthConditionFail < minimumFail){
                 minimumFail = fourthConditionFail;
             }
 
             let fifthConditionValue = ((fifthConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 5 : "+fifthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ fifthConditionValue+" %");
+            console.log('Kombinasi 5 : '+fifthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ fifthConditionValue+' %');
             
             if(fifthConditionFail < minimumFail){
                 minimumFail = fifthConditionFail;
             }
 
             let sixthConditionValue = ((sixthConditionFail/population.length) * 100).toFixed(2);
-            console.log("Kombinasi 6 : "+sixthConditionFail+" kesalahan dari "+population.length+" data, nilai "+ sixthConditionValue+" %");
+            console.log('Kombinasi 6 : '+sixthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ sixthConditionValue+' %');
 
             if(sixthConditionFail < minimumFail){
                 minimumFail = sixthConditionFail;
             }
 
             console.log("========================================================================");
-            console.log("Error ratio dari clustering ini sebesar : "+ ((minimumFail/population.length)*100).toFixed(2) +" %");
+            console.log('Error ratio dari clustering ini sebesar : '+ ((minimumFail/population.length)*100).toFixed(2) +' %');
+
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 1 : '+firstConditionFail+' kesalahan dari '+population.length+' data, nilai '+ firstConditionValue+' %</p></li>');
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 2 : '+secondConditionFail+' kesalahan dari '+population.length+' data, nilai '+ secondConditionValue+' %</p></li>');
+            
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 3 : '+thirdConditionFail+' kesalahan dari '+population.length+' data, nilai '+ thirdConditionValue+' %</p></li>');
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 4 : '+fourthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ fourthConditionValue+' %</p></li>');
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 5 : '+fifthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ fifthConditionValue+' %</p></li>');
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Kombinasi 6 : '+sixthConditionFail+' kesalahan dari '+population.length+' data, nilai '+ sixthConditionValue+' %</p></li>');
+
+            $(".list-group").append('<li class="list-group-item"><p class="text-capitalize">Error ratio dari clustering ini sebesar : '+ ((minimumFail/population.length)*100).toFixed(2) +' %</p></li>');
+
+            
+            $("#result .head-row").append('<th>Kombinasi 1</th>');
+            $("#result .head-row").append('<th>Kombinasi 2</th>');
+            $("#result .head-row").append('<th>Kombinasi 3</th>');
+            $("#result .head-row").append('<th>Kombinasi 4</th>');
+            $("#result .head-row").append('<th>Kombinasi 5</th>');
+            $("#result .head-row").append('<th>Kombinasi 6</th>');
+
+            population.forEach((row, key) => {
+                $("#result .body-row"+key).append('<td>'+ firstCondition[tempClusterResult[key]-1] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ secondCondition[tempClusterResult[key]-1] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ thirdCondition[tempClusterResult[key]-1] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ fourthCondition[tempClusterResult[key]-1] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ fifthCondition[tempClusterResult[key]-1] +'</td>');
+                $("#result .body-row"+key).append('<td>'+ sixthCondition[tempClusterResult[key]-1] +'</td>');
+            });
 
         }
 
     </script>
     <body onload="clusterize('iris.txt')"></body>
-        <!-- <div class="container">
+        <div class="container">
             <div class="jumbotron">
-                <h1 class="display-3">Metode K - Means</h1>
+                <h1 class="display-3">Metode N - k Clustering</h1><h1 class="display-4">(feat. Iris Dataset)</h1>
             </div>
-            <div class="dropdown">
+            <!-- <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pilih File</button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton"></div>
-            </div><br>
+            </div><br> -->
             <div class="card">
                 <div class="card-body text-capitalize">
-                    <div id="init"></div>
+                        <a class="btn btn-primary" data-toggle="collapse" href="#init" role="button" aria-expanded="false" aria-controls="collapseExample">
+                                Show/Hide Data
+                              </a><br>
+                    <div id="init" class="collapse"><br>
+                        <table class="table">
+                            <thead>
+                                <tr class="head-row">
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                     <br>
                     <div class="form-inline">
                         <label for="input" style="margin-right: 15px">K-Number: </label>
-                        <input class="form-control" type="number" id="input" min="1" value="4" style="margin-right: 15px">
-                        <input class="btn btn-secondary" type="button" value="Proses" id="submit" onclick="process()">
+                        <input class="form-control" type="number" id="input" min="1" value="3" style="margin-right: 15px">
+                        <input class="btn btn-secondary" type="button" value="Proses" id="submit" onclick="process()" style="margin-right: 15px">
+                        <input type="button" id="analysis" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="errorRatioCalculation()" value="Cluster Analysis" hidden>
                     </div><br>
-                    <div id="result"></div>
-                    <button type="button" id="analysis" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="clusterVariance()" hidden>Cluster Analysis</button>
+                    <div id="result" hidden>
+                        <table class="table">
+                            <thead>
+                                <tr class="head-row">
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <!-- Modal
+            <!-- Modal-->
             <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -296,7 +411,7 @@
                 </div>
             </div>
         </div>
-    </body> -->
+    </body>
     <script>
         $("#input").on("keyup","span",function(event){
             if(event.keyCode == 13){
